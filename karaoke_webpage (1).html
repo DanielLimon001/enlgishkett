@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Karaoke Sincronizado</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+        }
+        .container {
+            background-color: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .audio-container {
+            margin: 20px 0;
+            text-align: center;
+        }
+        .lyrics-container {
+            height: 400px;
+            overflow-y: auto;
+            padding: 20px;
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            line-height: 1.6;
+        }
+        .line {
+            margin: 10px 0;
+            padding: 5px;
+            border-radius: 4px;
+        }
+        .current-line {
+            background-color: #ffeaa7;
+            font-weight: bold;
+        }
+        .audio-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .buttons {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        button:disabled {
+            background-color: #bdc3c7;
+            cursor: not-allowed;
+        }
+        .status-message {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 5px;
+            text-align: center;
+            font-weight: bold;
+        }
+        .error {
+            background-color: #ffecec;
+            color: #e74c3c;
+            border: 1px solid #e74c3c;
+        }
+        .info {
+            background-color: #e8f4f8;
+            color: #3498db;
+            border: 1px solid #3498db;
+        }
+        .success {
+            background-color: #e8f8e8;
+            color: #27ae60;
+            border: 1px solid #27ae60;
+        }
+        .file-info {
+            font-size: 14px;
+            margin-top: 5px;
+            color: #666;
+        }
+        .debug-info {
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #f1f1f1;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+        }
+        .time-display {
+            font-family: monospace;
+            font-size: 18px;
+            text-align: center;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Karaoke Sincronizado</h1>
+        
+        <div id="status-container"></div>
+        
+        <div class="audio-container">
+            <div class="audio-controls">
+                <label for="audio-file">Selecciona tu archivo de audio (MP3, WAV, OGG - 6:58 min):</label>
+                <input type="file" id="audio-file" accept="audio/*">
+                <div id="file-info" class="file-info"></div>
+                
+                <div class="time-display">
+                    <span id="current-time">00:00</span> / <span id="duration">06:58</span>
+                </div>
+                
+                <audio id="audio-player" controls style="width: 100%;">
+                    Tu navegador no soporta el elemento de audio.
+                </audio>
+                
+                <div class="buttons">
+                    <button id="play-btn">Reproducir</button>
+                    <button id="pause-btn">Pausar</button>
+                    <button id="restart-btn">Reiniciar</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="lyrics-container" id="lyrics">
+            <!-- Aquí se insertará el texto estático para garantizar que aparezca -->
+            <div class="line" id="line-0">(00:00) Many medical experts say that walking is an easy way to improve physical and mental health, support fitness and prevent disease. They advise that walking is a great first step toward a healthy life although other forms of exercise are also important.</div>
+            <div class="line" id="line-1">(00:23) Dr. Sarah Eby is a sports medicine physician with Mass General Brigham in the state of Massachusetts. Eby said walking has many good effects and people do not need extra things. "You don't need equipment and you don't need a gym membership," Eby noted "And the benefits are so vast."</div>
+            <div class="line" id="line-2">(00:52) The U.S. surgeon general, a federal health officer, recommends that adults get at least two and a half hours of moderate-intensity physical activity every week.</div>
+            <div class="line" id="line-3">(01:08) Walking helps meet that goal. Exercise lowers the risk of heart disease, high pressure, dementia, depression and many kinds of cancer.</div>
+            <div class="line" id="line-4">(01:23) Walking also helps blood sugar levels, is good for bone health, and can help people lose weight and sleep better. That is what Julie Schmied said. She is a health care worker with Norton Healthcare in Kentucky, which runs the free Get Healthy Walking Club.</div>
+            <div class="line" id="line-5">(01:48) Walking is also a relatively low-impact exercise that puts less pressure on joints than other exercises while strengthening the heart and lungs.</div>
+            <div class="line" id="line-6">(02:03) James Blankenship is 68 years old. He said joining a walking club at the Louisville Zoo last year helped him recover after a heart attack and a complex triple-bypass heart operation in 2022.</div>
+            <div class="line" id="line-7">(02:26) "My cardiologist says I'm doing great," he said.</div>
+            <div class="line" id="line-8">(02:30) Some say walking is not enough. Anita Gust teaches exercise science at the University of Minnesota Crookston. Gust said walking "is not enough for overall health and well-being" because it does not provide resistance training that builds muscle strength and endurance.</div>
+            <div class="line" id="line-9">(02:58) Some health experts say that is especially important for healthy bone development in women as they age.</div>
+            <div class="line" id="line-10">(03:08) Experts recommend adding other activities at least twice weekly. These could include using weights, gym equipment or one's own body for resistance exercises. Training that improves flexibility, like yoga or stretching, can also be helpful.</div>
+            <div class="line" id="line-11">(03:33) Many people have heard about the walking goal of 10,000 steps a day. This advice dates back to a 1960s marketing campaign in Japan. But, experts note that this is only a guideline.</div>
+            <div class="line" id="line-12">(03:55) Shmied said the average American walks about 3,000 to 4,000 steps a day, and it is fine to increase that number to 10,000.</div>
+            <div class="line" id="line-13">(04:09) Setting a time goal can also be useful. Shmied suggests dividing the recommended 150 minutes per week into 30 minutes a day, or 10 minutes three times a day, for five days. During rainy or snowy weather, people can walk in malls or on treadmills.</div>
+            <div class="line" id="line-14">(04:37) As they become seasoned walkers, they can speed up or walk up hills while still keeping the activity level moderate.</div>
+            <div class="line" id="line-15">(04:48) "If you can talk but not sing," Eby said, "that's what we consider moderate-intensity exercise."</div>
+            <div class="line" id="line-16">(05:00) Walking with friends, including dogs, is one way to keep walking.</div>
+            <div class="line" id="line-17">(05:08) Walking clubs have appeared across the nation. In 2022, 31-year-old personal trainer Brianna Joye Kohn started City Girls Who Walk with a TikTok post inviting others to walk with her in New York.</div>
+            <div class="line" id="line-18">(05:29) "We had 250 girls show up," she said.</div>
+            <div class="line" id="line-19">(05:34) Since then, the group has walked every Sunday for around 40 minutes, with some meeting afterward for a meal or coffee.</div>
+            <div class="line" id="line-20">(05:46) The Louisville Zoo launched its walking club in 1987. It joined with Norton Healthcare in 2004 to expand it and now has more than 15,000 registered members. Every day from March 1 through October 31, people walk around and around the zoo before it officially opens.</div>
+            <div class="line" id="line-21">(06:15) Recently, Janet Rapp walked down a path through the city zoo, waving at friends and stopping briefly to greet big flightless birds called emus that she knows by name.</div>
+            <div class="line" id="line-22">(06:32) The 71-year-old retiree starts each morning this way with a walking club.</div>
+            <div class="line" id="line-23">(06:41) "I'm obsessed," she said. Not only does it ease her joint pain, "it just gives me energy…And then it calms me, too."</div>
+            <div class="line" id="line-24">(06:55) I'm Mario Ritter, Jr.</div>
+        </div>
+        
+        <div id="debug-container" style="display: none;" class="debug-info"></div>
+    </div>
+
+    <script>
+        // Definir tiempos de las líneas en segundos
+        const timestamps = [
+            0, 23, 52, 68, 83, 108, 123, 146, 150, 178, 188, 213, 235, 249, 
+            277, 288, 300, 308, 329, 334, 346, 375, 392, 401, 415
+        ];
+        
+        // Elementos del DOM
+        const audioPlayer = document.getElementById('audio-player');
+        const audioFileInput = document.getElementById('audio-file');
+        const playBtn = document.getElementById('play-btn');
+        const pauseBtn = document.getElementById('pause-btn');
+        const restartBtn = document.getElementById('restart-btn');
+        const statusContainer = document.getElementById('status-container');
+        const fileInfoContainer = document.getElementById('file-info');
+        const debugContainer = document.getElementById('debug-container');
+        const currentTimeDisplay = document.getElementById('current-time');
+        
+        // Variable para el intervalo de actualización
+        let updateInterval = null;
+        
+        // Función para mostrar mensajes de estado
+        function showStatus(message, type = 'info') {
+            const statusDiv = document.createElement('div');
+            statusDiv.className = `status-message ${type}`;
+            statusDiv.textContent = message;
+            
+            // Limpiar mensajes anteriores
+            statusContainer.innerHTML = '';
+            statusContainer.appendChild(statusDiv);
+            
+            // Auto-eliminar después de 5 segundos para mensajes info y success
+            if (type === 'info' || type === 'success') {
+                setTimeout(() => {
+                    if (statusContainer.contains(statusDiv)) {
+                        statusContainer.removeChild(statusDiv);
+                    }
+                }, 5000);
+            }
+        }
+        
+        // Función para mostrar info de depuración
+        function logDebug(message) {
+            if (typeof message === 'object') {
+                message = JSON.stringify(message, null, 2);
+            }
+            debugContainer.textContent += message + '\n';
+        }
+        
+        // Función para formatear tiempo (segundos a MM:SS)
+        function formatTime(seconds) {
+            const minutes = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+        
+        // Función para actualizar la línea activa según el tiempo actual
+        function updateActiveLine() {
+            const currentTime = audioPlayer.currentTime;
+            currentTimeDisplay.textContent = formatTime(currentTime);
+            
+            // Encontrar qué línea debe estar activa
+            let activeLineIndex = timestamps.length - 1;
+            for (let i = 0; i < timestamps.length - 1; i++) {
+                if (currentTime >= timestamps[i] && currentTime < timestamps[i + 1]) {
+                    activeLineIndex = i;
+                    break;
+                }
+            }
+            
+            // Eliminar resaltado de todas las líneas
+            document.querySelectorAll('.line').forEach(line => {
+                line.classList.remove('current-line');
+            });
+            
+            // Aplicar resaltado a la línea activa
+            const activeLine = document.getElementById(`line-${activeLineIndex}`);
+            if (activeLine) {
+                activeLine.classList.add('current-line');
+                activeLine.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+        
+        // Función para verificar si el navegador soporta un tipo de archivo de audio
+        function isSupportedAudioFormat(file) {
+            const audioFormats = {
+                'audio/mpeg': ['mp3'],
+                'audio/mp3': ['mp3'],
+                'audio/wav': ['wav'],
+                'audio/ogg': ['ogg'],
+                'audio/aac': ['aac'],
+                'audio/mp4': ['m4a', 'mp4a'],
+                'audio/webm': ['webm']
+            };
+            
+            const type = file.type;
+            const extension = file.name.split('.').pop().toLowerCase();
+            
+            // Comprobación por tipo MIME
+            if (audioFormats[type]) {
+                return true;
+            }
+            
+            // Comprobación por extensión si el tipo MIME no es detectado
+            for (const mimeType in audioFormats) {
+                if (audioFormats[mimeType].includes(extension)) {
+                    return true;
+                }
+            }
+            
+            return false;
+        }
+        
+        // Cargar el archivo de audio cuando se seleccione
+        audioFileInput.addEventListener('change', function(e) {
+            if (e.target.files && e.target.files[0]) {
+                const file = e.target.files[0];
+                
+                // Mostrar información del archivo
+                fileInfoContainer.textContent = `Archivo: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`;
+                
+                // Verificar si el formato es soportado
+                if (isSupportedAudioFormat(file)) {
+                    const audioURL = URL.createObjectURL(file);
+                    
+                    // Mostrar información detallada para depuración
+                    logDebug(`Tipo de archivo: ${file.type}`);
+                    logDebug(`Extensión: ${file.name.split('.').pop().toLowerCase()}`);
+                    logDebug(`URL creada: ${audioURL}`);
+                    
+                    // Configurar controladores de eventos antes de establecer la fuente
+                    audioPlayer.onloadedmetadata = function() {
+                        document.getElementById('duration').textContent = formatTime(audioPlayer.duration);
+                        showStatus('Audio cargado correctamente. Puedes presionar "Reproducir" para comenzar.', 'success');
+                    };
+                    
+                    audioPlayer.onerror = function() {
+                        showStatus(`Error al cargar el audio: ${audioPlayer.error ? audioPlayer.error.message : 'Formato no soportado'}`, 'error');
+                        logDebug(`Error de audio: ${audioPlayer.error ? audioPlayer.error.code + ' - ' + audioPlayer.error.message : 'Desconocido'}`);
+                    };
+                    
+                    // Establecer la fuente
+                    audioPlayer.src = audioURL;
+                    
+                    // Forzar la carga del audio
+                    audioPlayer.load();
+                } else {
+                    showStatus('El formato de audio seleccionado no es compatible con tu navegador. Intenta con MP3, WAV u OGG.', 'error');
+                }
+            }
+        });
+        
+        // Configurar manejo de errores global para el elemento de audio
+        audioPlayer.addEventListener('error', function(e) {
+            const error = audioPlayer.error;
+            let errorMessage = 'Error desconocido';
+            
+            if (error) {
+                switch (error.code) {
+                    case MediaError.MEDIA_ERR_ABORTED:
+                        errorMessage = 'La reproducción fue abortada por el usuario.';
+                        break;
+                    case MediaError.MEDIA_ERR_NETWORK:
+                        errorMessage = 'Se produjo un error de red.';
+                        break;
+                    case MediaError.MEDIA_ERR_DECODE:
+                        errorMessage = 'El archivo está corrupto o no se puede decodificar.';
+                        break;
+                    case MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED:
+                        errorMessage = 'El formato de audio no es compatible con tu navegador.';
+                        break;
+                    default:
+                        errorMessage = `Error desconocido (código ${error.code})`;
+                }
+            }
+            
+            showStatus(`Error de reproducción: ${errorMessage}`, 'error');
+            logDebug(`Error detallado: ${JSON.stringify(error)}`);
+        });
+        
+        // Configurar botones de control
+        playBtn.addEventListener('click', function() {
+            if (audioPlayer.src) {
+                // Iniciar el seguimiento de las líneas si no está activo
+                if (!updateInterval) {
+                    updateInterval = setInterval(updateActiveLine, 100);
+                }
+                
+                audioPlayer.play()
+                    .then(() => {
+                        showStatus('Reproduciendo...', 'success');
+                    })
+                    .catch(err => {
+                        showStatus(`Error al reproducir: ${err.message}`, 'error');
+                        logDebug(`Error en play(): ${err.message}`);
+                        
+                        // Mostrar el botón de debug si hay un error
+                        debugContainer.style.display = 'block';
+                    });
+            } else {
+                showStatus('Por favor, selecciona un archivo de audio primero.', 'error');
+            }
+        });
+        
+        pauseBtn.addEventListener('click', function() {
+            if (audioPlayer.src) {
+                audioPlayer.pause();
+                showStatus('Audio pausado', 'info');
+            }
+        });
+        
+        restartBtn.addEventListener('click', function() {
+            if (audioPlayer.src) {
+                audioPlayer.currentTime = 0;
+                
+                // Iniciar el seguimiento de las líneas si no está activo
+                if (!updateInterval) {
+                    updateInterval = setInterval(updateActiveLine, 100);
+                }
+                
+                audioPlayer.play()
+                    .then(() => {
+                        showStatus('Reiniciando reproducción...', 'info');
+                    })
+                    .catch(err => {
+                        showStatus(`Error al reiniciar: ${err.message}`, 'error');
+                        logDebug(`Error en restart: ${err.message}`);
+                    });
+            } else {
+                showStatus('Por favor, selecciona un archivo de audio primero.', 'error');
+            }
+        });
+        
+        // Actualizar el tiempo actual en pantalla
+        audioPlayer.addEventListener('timeupdate', function() {
+            currentTimeDisplay.textContent = formatTime(audioPlayer.currentTime);
+        });
+        
+        // Detener el intervalo cuando el audio termina
+        audioPlayer.addEventListener('ended', function() {
+            clearInterval(updateInterval);
+            updateInterval = null;
+            showStatus('Audio finalizado', 'info');
+        });
+        
+        // Mensaje inicial
+        showStatus('Selecciona un archivo de audio para comenzar. El texto ya está cargado y listo.', 'info');
+        
+        // Modo de depuración (puedes activarlo si hay errores)
+        document.addEventListener('keydown', function(e) {
+            // Activar/desactivar depuración con Ctrl+D
+            if (e.ctrlKey && e.key === 'd') {
+                debugContainer.style.display = debugContainer.style.display === 'none' ? 'block' : 'none';
+                e.preventDefault();
+            }
+        });
+    </script>
+</body>
+</html>
